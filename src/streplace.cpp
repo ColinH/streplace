@@ -186,6 +186,12 @@ public:
         }
     }
 
+    /// Return true iff at least one replacement rule was configured.
+    bool hasRules() const
+    {
+        return !rules.empty();
+    }
+
     /// Process directory entry (rename and modify content).
     void processDirectoryEntry(std::filesystem::directory_entry& directoryEntry)
     {
@@ -204,6 +210,16 @@ public:
             // Rename files and dirs.
             if (rename)
             {
+                bool wasRegularFile = directoryEntry.is_regular_file();
+                bool wasDirectory   = directoryEntry.is_directory();
+                if (wasRegularFile)
+                {
+                    numFilesConsideredForRename++;
+                }
+                else if (wasDirectory)
+                {
+                    numDirsConsideredForRename++;
+                }
                 std::filesystem::path oldPath = directoryEntry.path();
                 std::filesystem::path basePath = oldPath.parent_path();
                 std::string oldName = oldPath.filename().string();
@@ -220,7 +236,14 @@ public:
                         std::filesystem::rename(oldPath, newPath);
                         directoryEntry.replace_filename(newName);
                     }
-                    numDirsRenamed++;
+                    if (wasRegularFile)
+                    {
+                        numFilesRenamed++;
+                    }
+                    else if (wasDirectory)
+                    {
+                        numDirsRenamed++;
+                    }
                 }
             }
 
@@ -270,11 +293,11 @@ public:
         }
         if (numFilesRenamed)
         {
-            l.push_back(std::to_string(numFilesRenamed) + "/" + std::to_string(numFilesProcessed) + " file" + ut1::pluralS(numFilesRenamed) + " renamed");
+            l.push_back(std::to_string(numFilesRenamed) + "/" + std::to_string(numFilesConsideredForRename) + " file" + ut1::pluralS(numFilesRenamed) + " renamed");
         }
         if (numDirsRenamed)
         {
-            l.push_back(std::to_string(numDirsRenamed) + "/" + std::to_string(numDirsProcessed) + " dir" + ut1::pluralS(numDirsRenamed) + " renamed");
+            l.push_back(std::to_string(numDirsRenamed) + "/" + std::to_string(numDirsConsideredForRename) + " dir" + ut1::pluralS(numDirsRenamed) + " renamed");
         }
         else if (numDirsProcessed)
         {
@@ -640,10 +663,12 @@ private:
     uint64_t numFilesProcessed{};
     uint64_t numFilesModified{};
     uint64_t numFilesRenamed{};
+    uint64_t numFilesConsideredForRename{};
     uint64_t numSymlinksProcessed{};
     uint64_t numSymlinksModified{};
     uint64_t numDirsProcessed{};
     uint64_t numDirsRenamed{};
+    uint64_t numDirsConsideredForRename{};
 
     EscapeSequences escapeSequences;
 };
@@ -730,6 +755,11 @@ int main(int argc, char* argv[])
             {
                 cl.error("'" + arg + "': No such file or directory.");
             }
+        }
+
+        if (!streplace.hasRules())
+        {
+            cl.error("Please specify at least one rule.");
         }
 
         // Print rules.

@@ -230,6 +230,16 @@ def test_error_on_modify_symlinks_with_rename(tmp_path: Path) -> None:
     assert "cannot be combined" in result.stdout
 
 
+def test_error_on_missing_rule(tmp_path: Path) -> None:
+    streplace = streplace_bin()
+    target = tmp_path / "foo.txt"
+    target.write_text("foo\n", encoding="utf-8")
+
+    result = run_streplace_result([str(target)], streplace.parent)
+    assert result.returncode != 0
+    assert "Please specify at least one rule" in result.stdout
+
+
 def test_rename_recursive_rename_and_modify(tmp_path: Path) -> None:
     streplace = streplace_bin()
     root = tmp_path / "root"
@@ -365,6 +375,16 @@ def test_rename_only_file(tmp_path: Path) -> None:
     assert renamed.read_text(encoding="utf-8") == "foo\n"
 
 
+def test_rename_only_file_stats(tmp_path: Path) -> None:
+    streplace = streplace_bin()
+    file_path = tmp_path / "foo.txt"
+    file_path.write_text("foo\n", encoding="utf-8")
+
+    result = run_streplace(["-v", "-N", "foo=bar", str(file_path)], streplace.parent)
+    assert "1/1 file renamed" in result.stdout
+    assert "dir renamed" not in result.stdout
+
+
 def test_rename_only_directory(tmp_path: Path) -> None:
     streplace = streplace_bin()
     dir_path = tmp_path / "foo_dir"
@@ -375,6 +395,16 @@ def test_rename_only_directory(tmp_path: Path) -> None:
     assert not dir_path.exists()
     renamed_dir = tmp_path / "bar_dir"
     assert (renamed_dir / "keep.txt").read_text(encoding="utf-8") == "foo\n"
+
+
+def test_recursive_rename_only_directory_stats(tmp_path: Path) -> None:
+    streplace = streplace_bin()
+    root = tmp_path / "tmp"
+    (root / "zzz1111").mkdir(parents=True)
+    (root / "zzz11111111111").mkdir()
+
+    result = run_streplace(["zzz=aaa", "-N", str(root), "-v", "-r"], streplace.parent)
+    assert "2/3 dirs renamed" in result.stdout
 
 
 def test_rename_and_modify_file(tmp_path: Path) -> None:
