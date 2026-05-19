@@ -691,8 +691,8 @@ int main(int argc, char* argv[])
                                            "- Use 'IMG([0-9]*).jpeg=pic$1.jpg' to reuse subexpressions of regular expressions ($& for the whole match, $n for subexpressions)."
                                            "\n",
         "\n"
-        "$programName version $version *** Copyright (c) 2021-2022 Johannes Overmann *** https://github.com/jovermann/streplace",
-        "0.10.2");
+        "$programName version $version *** Copyright (c) 1997-2026 Johannes Overmann *** https://github.com/jovermann/streplace",
+        "0.10.3");
 
     cl.addHeader("\nFile options:\n");
     cl.addOption('r', "recursive", "Recursively process directories.");
