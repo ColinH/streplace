@@ -5,8 +5,8 @@ TARGET = streplace
 
 CPPFLAGS ?= -pedantic
 
-#CXXFLAGS ?= -Wall -Wextra
-CXXFLAGS ?= -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-shorten-64-to-32 -Wno-missing-prototypes -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-poison-system-directories -fcomment-block-commands=n -Wno-string-conversion -Wno-covered-switch-default -Wno-extra-semi-stmt
+WARNING_FLAGS ?= -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-shorten-64-to-32 -Wno-missing-prototypes -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-poison-system-directories -fcomment-block-commands=n -Wno-string-conversion -Wno-covered-switch-default -Wno-extra-semi-stmt
+CXXFLAGS ?= -Wall
 
 CXXSTD ?= -std=c++23
 
@@ -34,9 +34,8 @@ clean:
 	rm -rf build $(UNIT_TEST_BUILDDIR) $(TARGET) unit_test
 	find . -name '*~' -delete
 
-uint_test: clean
 $(UNIT_TEST_BUILDDIR)/%.o: %.cpp $(UNIT_TEST_BUILDDIR)/%.d
-	$(CXX) $(CXXSTD) $(CPPFLAGS) -D ENABLE_UNIT_TEST $(CXXFLAGS) -Wno-weak-vtables -Wno-missing-variable-declarations -Wno-exit-time-destructors -Wno-global-constructors -c $< -o $@
+	$(CXX) $(CXXSTD) $(CPPFLAGS) -D ENABLE_UNIT_TEST $(CXXFLAGS) -c $< -o $@
 
 $(UNIT_TEST_BUILDDIR)/%.d: %.cpp Makefile
 	@mkdir -p $(@D)
@@ -59,7 +58,11 @@ tidy: $(TARGET)
 	echo "]" >> $(BUILDDIR)/compile_commands.json
 	clang-tidy -p $(BUILDDIR) --config-file .clang-tidy src/*.cpp src/*.hpp
 
-.PHONY: clean default unit_test test format
+warnings:
+	$(MAKE) clean
+	$(MAKE) CXXFLAGS="$(WARNING_FLAGS)" $(TARGET)
+
+.PHONY: clean default unit_test test format warnings
 
 ifeq ($(findstring $(MAKECMDGOALS),clean),)
 ifneq ($(MAKECMDGOALS),unit_test)
